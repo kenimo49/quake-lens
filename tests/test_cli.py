@@ -1,3 +1,4 @@
+import argparse
 import io
 import json
 import math
@@ -17,6 +18,20 @@ def _p2p_http_get(url):
 
 def _usgs_http_get(url):
     return (FIXTURE_DIR / "usgs_catalog.json").read_bytes()
+
+
+def test_every_subcommand_registers_func():
+    # set_defaults(func=...) を忘れたサブコマンドは help 表示 + exit 0 の
+    # silent no-op になるため、全サブパーサーの func 登録をここで担保する
+    parser = build_parser()
+    sub_action = next(
+        a for a in parser._actions if isinstance(a, argparse._SubParsersAction)
+    )
+    assert sub_action.choices, "サブコマンドが1つも登録されていない"
+    for name, subparser in sub_action.choices.items():
+        assert callable(subparser.get_default("func")), (
+            f"サブコマンド {name!r} に set_defaults(func=...) が無い"
+        )
 
 
 @pytest.mark.parametrize("cmd", ["recent", "catalog", "bvalue", "omori"])

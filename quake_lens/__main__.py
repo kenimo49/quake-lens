@@ -29,7 +29,7 @@ def build_parser() -> argparse.ArgumentParser:
         description="公開地震データの取得と統計分析（b値・大森則フィット）",
     )
     parser.add_argument("--version", action="version", version=f"quake-lens {__version__}")
-    sub = parser.add_subparsers(dest="command")
+    sub = parser.add_subparsers()
 
     p_recent = sub.add_parser("recent", help="直近の地震リスト (P2P地震情報)")
     p_recent.add_argument("--limit", type=int, default=10, help="件数上限 (default: 10)")
