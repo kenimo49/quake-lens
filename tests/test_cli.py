@@ -2,7 +2,6 @@ import io
 import json
 import math
 import random
-from contextlib import redirect_stdout, redirect_stderr
 from pathlib import Path
 
 import pytest
