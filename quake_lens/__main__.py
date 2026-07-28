@@ -15,13 +15,21 @@ from quake_lens.stats import bvalue as bvalue_stats
 from quake_lens.stats import omori as omori_stats
 
 
+def _add_format_arg(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--format", choices=["table", "json"], default="table")
+
+
+def _add_input_arg(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("input", nargs="?", default="-", help="イベントJSONパス or '-' (stdin)")
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="quake-lens",
         description="公開地震データの取得と統計分析（b値・大森則フィット）",
     )
     parser.add_argument("--version", action="version", version=f"quake-lens {__version__}")
-    sub = parser.add_subparsers(dest="command")
+    sub = parser.add_subparsers()
 
     p_recent = sub.add_parser("recent", help="直近の地震リスト (P2P地震情報)")
     p_recent.add_argument("--limit", type=int, default=10, help="件数上限 (default: 10)")
@@ -31,7 +39,8 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="P2Pのscale値で震度フィルタ (例: 30=震度3)",
     )
-    p_recent.add_argument("--format", choices=["table", "json"], default="table")
+    _add_format_arg(p_recent)
+    p_recent.set_defaults(func=cmd_recent)
 
     p_catalog = sub.add_parser("catalog", help="USGSカタログ取得")
     p_catalog.add_argument("--start", default=None, help="開始時刻 (ISO8601)")
@@ -42,17 +51,20 @@ def build_parser() -> argparse.ArgumentParser:
         default="24,122,46,146",
         help="minlat,minlon,maxlat,maxlon (default: 日本周辺)",
     )
-    p_catalog.add_argument("--format", choices=["table", "json"], default="table")
+    _add_format_arg(p_catalog)
+    p_catalog.set_defaults(func=cmd_catalog)
 
     p_bvalue = sub.add_parser("bvalue", help="Gutenberg-Richter b値推定 (Aki MLE)")
-    p_bvalue.add_argument("input", nargs="?", default="-", help="イベントJSONパス or '-' (stdin)")
+    _add_input_arg(p_bvalue)
     p_bvalue.add_argument("--mc", type=float, default=None, help="completeness magnitude (必須)")
-    p_bvalue.add_argument("--format", choices=["table", "json"], default="table")
+    _add_format_arg(p_bvalue)
+    p_bvalue.set_defaults(func=cmd_bvalue)
 
     p_omori = sub.add_parser("omori", help="修正大森則フィット (Ogata MLE)")
-    p_omori.add_argument("input", nargs="?", default="-", help="イベントJSONパス or '-' (stdin)")
+    _add_input_arg(p_omori)
     p_omori.add_argument("--mainshock", default=None, help="本震時刻 (ISO8601, 必須)")
-    p_omori.add_argument("--format", choices=["table", "json"], default="table")
+    _add_format_arg(p_omori)
+    p_omori.set_defaults(func=cmd_omori)
 
     return parser
 
@@ -127,23 +139,15 @@ def cmd_omori(args) -> int:
 def main(argv=None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
-    if args.command is None:
+    func = getattr(args, "func", None)
+    if func is None:
         parser.print_help()
         return 0
     try:
-        if args.command == "recent":
-            return cmd_recent(args)
-        if args.command == "catalog":
-            return cmd_catalog(args)
-        if args.command == "bvalue":
-            return cmd_bvalue(args)
-        if args.command == "omori":
-            return cmd_omori(args)
+        return func(args)
     except Exception as e:  # noqa: BLE001
         print(f"error: {e}", file=sys.stderr)
         return 1
-    parser.print_help()
-    return 0
 
 
 if __name__ == "__main__":
