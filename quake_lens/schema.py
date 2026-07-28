@@ -1,0 +1,60 @@
+"""Normalized earthquake event schema shared across sources."""
+
+from __future__ import annotations
+
+from datetime import datetime, timezone
+from typing import Any
+
+FIELDS = ("time", "lat", "lon", "depth_km", "mag", "place", "source")
+SOURCES = ("usgs", "jma", "p2p")
+
+
+def make_event(
+    *,
+    time: str,
+    lat: float,
+    lon: float,
+    depth_km: float,
+    mag: float,
+    place: str,
+    source: str,
+) -> dict[str, Any]:
+    if source not in SOURCES:
+        raise ValueError(f"unknown source: {source}")
+    return {
+        "time": time,
+        "lat": float(lat),
+        "lon": float(lon),
+        "depth_km": float(depth_km),
+        "mag": float(mag),
+        "place": str(place),
+        "source": source,
+    }
+
+
+def parse_iso8601_utc(s: str) -> datetime:
+    """Parse ISO8601 into an aware UTC datetime.
+
+    Accepts trailing 'Z' as well as explicit offsets.
+    """
+    s = s.strip()
+    if s.endswith("Z"):
+        s = s[:-1] + "+00:00"
+    dt = datetime.fromisoformat(s)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
+
+
+def to_iso8601_utc(dt: datetime) -> str:
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    dt = dt.astimezone(timezone.utc)
+    return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def validate_event(obj: dict[str, Any]) -> dict[str, Any]:
+    missing = [f for f in FIELDS if f not in obj]
+    if missing:
+        raise ValueError(f"event missing fields: {missing}")
+    return obj

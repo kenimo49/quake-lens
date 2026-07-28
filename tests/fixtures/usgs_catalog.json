@@ -1,0 +1,39 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {"count": 3},
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "mag": 5.2,
+        "place": "20 km E of Fukushima, Japan",
+        "time": 1704110400000,
+        "type": "earthquake"
+      },
+      "geometry": {"type": "Point", "coordinates": [140.9, 37.5, 30.0]},
+      "id": "us001"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "mag": 4.6,
+        "place": "50 km SW of Ishikawa, Japan",
+        "time": 1704200000000,
+        "type": "earthquake"
+      },
+      "geometry": {"type": "Point", "coordinates": [136.9, 36.9, 12.0]},
+      "id": "us002"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "mag": 7.6,
+        "place": "Noto Peninsula, Japan",
+        "time": 1704095400000,
+        "type": "earthquake"
+      },
+      "geometry": {"type": "Point", "coordinates": [137.3, 37.5, 10.0]},
+      "id": "us003"
+    }
+  ]
+}
