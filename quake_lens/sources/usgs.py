@@ -4,18 +4,17 @@ from __future__ import annotations
 
 import json
 import urllib.parse
-import urllib.request
 from datetime import datetime, timezone
 from typing import Any, Callable
 
 from quake_lens.schema import make_event, to_iso8601_utc
+from quake_lens.sources.http_client import http_get as _http_get
 
 BASE_URL = "https://earthquake.usgs.gov/fdsnws/event/1/query"
 
 
 def _default_http_get(url: str) -> bytes:
-    with urllib.request.urlopen(url, timeout=60) as resp:  # noqa: S310
-        return resp.read()
+    return _http_get(url, timeout=60.0)
 
 
 def build_url(

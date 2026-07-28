@@ -4,19 +4,18 @@ from __future__ import annotations
 
 import json
 import urllib.parse
-import urllib.request
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable
 
 from quake_lens.schema import make_event, to_iso8601_utc
+from quake_lens.sources.http_client import http_get as _http_get
 
 BASE_URL = "https://api.p2pquake.net/v2/history"
 _JST = timezone(timedelta(hours=9))
 
 
 def _default_http_get(url: str) -> bytes:
-    with urllib.request.urlopen(url, timeout=30) as resp:  # noqa: S310
-        return resp.read()
+    return _http_get(url, timeout=30.0)
 
 
 def build_url(limit: int) -> str:
