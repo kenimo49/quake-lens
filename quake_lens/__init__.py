@@ -1,3 +1,3 @@
-"""quake-lens: public earthquake catalog fetcher + forecasting statistics."""
+"""quake-lens: 公開地震カタログの取得と予測統計 (b値・大森則) を提供するツール。"""
 
 __version__ = "0.0.1"

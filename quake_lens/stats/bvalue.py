@@ -1,4 +1,4 @@
-"""Gutenberg-Richter b-value estimator (Aki 1965 MLE)."""
+"""Gutenberg-Richter b値推定器 (Aki 1965 MLE)。"""
 
 from __future__ import annotations
 
@@ -9,10 +9,10 @@ DELTA_M = 0.1
 
 
 def estimate(mags: Iterable[float], mc: float, delta_m: float = DELTA_M) -> dict[str, float]:
-    """Aki MLE for b-value given magnitude completeness `mc`.
+    """完全性マグニチュード `mc` を与えて、Aki MLEでb値を推定する。
 
     b = log10(e) / (mean(M) - (Mc - ΔM/2))
-    SE(b) = b / sqrt(N)   (Aki 1965 approximation)
+    SE(b) = b / sqrt(N)   (Aki 1965 の近似)
     """
     used = [m for m in mags if m >= mc]
     n = len(used)

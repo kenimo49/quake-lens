@@ -1,11 +1,11 @@
-"""Modified Omori-Utsu law fit via Ogata (1983) MLE.
+"""修正大森則を Ogata (1983) の MLE でフィットする。
 
 λ(t) = K / (t + c)^p     for t in [t_start, t_end]
 
-With N observed aftershock times, K has a closed-form MLE given (c, p):
+N個の観測余震時刻に対して、(c, p) を固定すればKは閉形式のMLEを持つ:
     K* = N / integral(c, p),   integral = ∫ (t+c)^{-p} dt over [t_start, t_end]
 
-So the 2D optimization is over (c, p) minimizing
+したがって最適化は (c, p) の2次元となり、以下を最小化する:
     f(c, p) = N*log(integral(c, p)) + p*sum(log(t_i+c))
 """
 
@@ -25,7 +25,7 @@ def _integral(c: float, p: float, t_start: float, t_end: float) -> float:
 
 
 def loglik(K: float, c: float, p: float, times: list[float], t_start: float, t_end: float) -> float:
-    """Full log-likelihood for the modified Omori inhomogeneous Poisson process."""
+    """修正大森則 (非同次Poisson過程) の完全な対数尤度を返す。"""
     if K <= 0 or c <= 0 or p <= 0:
         return float("-inf")
     s = 0.0

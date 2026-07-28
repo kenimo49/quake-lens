@@ -1,4 +1,4 @@
-"""CLI entry point: quake-lens {recent, catalog, bvalue, omori}."""
+"""CLIエントリポイント: quake-lens {recent, catalog, bvalue, omori}。"""
 
 from __future__ import annotations
 

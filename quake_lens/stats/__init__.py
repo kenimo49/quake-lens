@@ -1,1 +1,1 @@
-"""Pure-function statistics: no network, no filesystem."""
+"""純関数の統計処理。networkもfilesystemも触らない。"""

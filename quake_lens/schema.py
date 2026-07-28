@@ -1,4 +1,4 @@
-"""Normalized earthquake event schema shared across sources."""
+"""複数sourceで共有する、正規化された地震イベントのschema定義。"""
 
 from __future__ import annotations
 
@@ -33,9 +33,9 @@ def make_event(
 
 
 def parse_iso8601_utc(s: str) -> datetime:
-    """Parse ISO8601 into an aware UTC datetime.
+    """ISO8601文字列をtz付きのUTC datetimeにparseする。
 
-    Accepts trailing 'Z' as well as explicit offsets.
+    末尾の 'Z' も、明示的なoffset表記も受け付ける。
     """
     s = s.strip()
     if s.endswith("Z"):
