@@ -1,4 +1,4 @@
-"""Output formatters for normalized events and stat results."""
+"""正規化イベントと統計結果を整形するフォーマッタ群。"""
 
 from __future__ import annotations
 

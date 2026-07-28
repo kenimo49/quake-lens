@@ -1,4 +1,4 @@
-"""USGS FDSN event API adapter (GeoJSON)."""
+"""USGS FDSN event APIのアダプタ (GeoJSON)。"""
 
 from __future__ import annotations
 

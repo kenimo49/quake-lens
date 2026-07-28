@@ -1,4 +1,4 @@
-"""P2P地震情報 API v2 adapter (codes=551, quake info)."""
+"""P2P地震情報 API v2 のアダプタ (codes=551, 地震情報)。"""
 
 from __future__ import annotations
 
@@ -35,7 +35,7 @@ def fetch_recent(
 
 
 def _parse_jst_time(s: str) -> datetime:
-    """P2P returns local (JST) times like '2024-01-01 16:10:00.000' or with '/'."""
+    """P2Pが返すJSTのローカル時刻をparseする ('2024-01-01 16:10:00.000' や '/' 区切り形式)。"""
     s = s.strip().replace("/", "-")
     for fmt in ("%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d %H:%M:%S"):
         try:
