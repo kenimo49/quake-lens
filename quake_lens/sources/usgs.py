@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from typing import Any, Callable
 
 from quake_lens.schema import make_event, to_iso8601_utc
-from quake_lens.sources.http import http_get as _http_get
+from quake_lens.sources.http_client import http_get as _http_get
 
 BASE_URL = "https://earthquake.usgs.gov/fdsnws/event/1/query"
 
