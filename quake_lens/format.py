@@ -8,9 +8,55 @@ from typing import Any, Iterable
 
 def format_events(events: list[dict[str, Any]], fmt: str) -> str:
     if fmt == "json":
-        return json.dumps(events, ensure_ascii=False, indent=2)
+        return _to_json(events)
     if fmt == "table":
         return _events_table(events)
+    raise ValueError(f"unknown format: {fmt}")
+
+
+def format_bvalue(result: dict[str, Any], fmt: str) -> str:
+    return _render_kv(
+        result,
+        [
+            ("b", result["b"], ".4f"),
+            ("se", result["se"], ".4f"),
+            ("n_used", result["n"], ""),
+            ("mc", result["mc"], ".2f"),
+            ("mean_m", result["mean_m"], ".3f"),
+        ],
+        fmt,
+    )
+
+
+def format_omori(result: dict[str, Any], fmt: str) -> str:
+    window = f"[{result['t_start']:.4f}, {result['t_end']:.4f}] days"
+    return _render_kv(
+        result,
+        [
+            ("K", result["K"], ".4f"),
+            ("c", result["c"], ".4f"),
+            ("p", result["p"], ".4f"),
+            ("logL", result["logL"], ".4f"),
+            ("n_used", result["n"], ""),
+            ("window", window, ""),
+        ],
+        fmt,
+    )
+
+
+def _to_json(payload: Any) -> str:
+    return json.dumps(payload, ensure_ascii=False, indent=2)
+
+
+def _render_kv(
+    payload: dict[str, Any],
+    rows: Iterable[tuple[str, Any, str]],
+    fmt: str,
+) -> str:
+    if fmt == "json":
+        return _to_json(payload)
+    if fmt == "table":
+        return "\n".join(f"{label:<8}= {format(value, spec)}" for label, value, spec in rows)
     raise ValueError(f"unknown format: {fmt}")
 
 
@@ -23,32 +69,3 @@ def _events_table(events: Iterable[dict[str, Any]]) -> str:
             f"{e['depth_km']:>6.1f}  {e['mag']:>4.1f}  {e['source']:<4}  {e['place']}"
         )
     return "\n".join(lines)
-
-
-def format_bvalue(result: dict[str, Any], fmt: str) -> str:
-    if fmt == "json":
-        return json.dumps(result, ensure_ascii=False, indent=2)
-    if fmt == "table":
-        return (
-            f"b       = {result['b']:.4f}\n"
-            f"se      = {result['se']:.4f}\n"
-            f"n_used  = {result['n']}\n"
-            f"mc      = {result['mc']:.2f}\n"
-            f"mean_m  = {result['mean_m']:.3f}"
-        )
-    raise ValueError(f"unknown format: {fmt}")
-
-
-def format_omori(result: dict[str, Any], fmt: str) -> str:
-    if fmt == "json":
-        return json.dumps(result, ensure_ascii=False, indent=2)
-    if fmt == "table":
-        return (
-            f"K       = {result['K']:.4f}\n"
-            f"c       = {result['c']:.4f}\n"
-            f"p       = {result['p']:.4f}\n"
-            f"logL    = {result['logL']:.4f}\n"
-            f"n_used  = {result['n']}\n"
-            f"window  = [{result['t_start']:.4f}, {result['t_end']:.4f}] days"
-        )
-    raise ValueError(f"unknown format: {fmt}")
