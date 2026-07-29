@@ -1,7 +1,37 @@
 [
   {
     "code": 551,
-    "id": "aaaa1111",
+    "id": "aaaa1110-prompt",
+    "earthquake": {
+      "time": "2024-01-01 16:10:00.000",
+      "hypocenter": {
+        "name": "",
+        "latitude": -200,
+        "longitude": -200,
+        "depth": -1,
+        "magnitude": -1
+      },
+      "maxScale": 70
+    }
+  },
+  {
+    "code": 551,
+    "id": "aaaa1111-detail",
+    "earthquake": {
+      "time": "2024-01-01 16:10:00.000",
+      "hypocenter": {
+        "name": "石川県能登地方",
+        "latitude": 37.5,
+        "longitude": 137.3,
+        "depth": 10,
+        "magnitude": 7.6
+      },
+      "maxScale": 70
+    }
+  },
+  {
+    "code": 551,
+    "id": "aaaa1111-dest",
     "earthquake": {
       "time": "2024-01-01 16:10:00.000",
       "hypocenter": {
