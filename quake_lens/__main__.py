@@ -10,7 +10,7 @@ from typing import Any
 from quake_lens import __version__
 from quake_lens.format import format_bvalue, format_events, format_omori
 from quake_lens.schema import parse_iso8601_utc
-from quake_lens.sources import p2p, usgs
+from quake_lens.sources import jma, p2p, usgs
 from quake_lens.stats import bvalue as bvalue_stats
 from quake_lens.stats import omori as omori_stats
 
@@ -38,7 +38,13 @@ def build_parser() -> argparse.ArgumentParser:
         "--min-scale",
         type=int,
         default=None,
-        help="P2Pのscale値で震度フィルタ (例: 30=震度3)",
+        help="P2Pのscale値で震度フィルタ (例: 30=震度3, --src p2p のときのみ有効)",
+    )
+    p_recent.add_argument(
+        "--src",
+        choices=["p2p", "jma"],
+        default="p2p",
+        help="取得元 (default: p2p)",
     )
     _add_format_arg(p_recent)
     p_recent.set_defaults(func=cmd_recent)
@@ -91,8 +97,12 @@ def _parse_bbox(s: str) -> tuple[float, float, float, float]:
 
 
 def cmd_recent(args, http_get=None) -> int:
-    """`recent` subcommand: P2P地震情報から直近イベントを取得して表示する。"""
-    events = p2p.fetch_recent(limit=args.limit, min_scale=args.min_scale, http_get=http_get)
+    """`recent` subcommand: P2P地震情報またはJMAから直近イベントを取得して表示する。"""
+    src = getattr(args, "src", "p2p")
+    if src == "jma":
+        events = jma.fetch_recent(limit=args.limit, http_get=http_get)
+    else:
+        events = p2p.fetch_recent(limit=args.limit, min_scale=args.min_scale, http_get=http_get)
     print(format_events(events, args.format))
     return 0
 
