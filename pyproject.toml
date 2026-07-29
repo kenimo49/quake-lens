@@ -11,8 +11,12 @@ license = { text = "MIT" }
 requires-python = ">=3.10"
 dependencies = []
 
+[project.optional-dependencies]
+mcp = ["mcp"]
+
 [project.scripts]
 quake-lens = "quake_lens.__main__:main"
+quake-lens-mcp = "quake_lens.mcp_server:main"
 
 [tool.setuptools.packages.find]
 include = ["quake_lens*"]
