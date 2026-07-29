@@ -1,16 +1,31 @@
 # quake-lens
 
-公開地震データの取得と統計分析を行うCLI。地震の「予知」はできないが、「予測(forecasting)」として科学的に成立している統計量 — b値、大森・宇津則による余震減衰 — を公開APIのカタログから計算する。
+![quake-lens](docs/assets/hero.jpg)
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB.svg)](pyproject.toml)
+[![Runtime deps](https://img.shields.io/badge/runtime%20deps-0%20(stdlib%20only)-1E3A5F.svg)](pyproject.toml)
+
+公開地震データの取得と統計分析を行うCLI + MCPサーバ。地震の「予知」はできないが、「予測(forecasting)」として科学的に成立している統計量 — b値、大森・宇津則による余震減衰 — を公開APIのカタログから計算する。
+
+Earthquake statistics CLI & MCP server in pure-stdlib Python: Gutenberg-Richter b-value (Aki MLE) and Omori-Utsu aftershock decay (Ogata MLE) from public catalogs (JMA / P2P / USGS).
+
+> 📖 解説記事: [地震予知はなぜ無理で、余震予測はなぜできるのか — 能登の余震130件で実測](https://kenimoto.dev/ja/blog/jishin-yochi-vs-yoshin-yosoku-jissoku/)
 
 ## Status
 
-v1 実装済み: `recent` / `catalog` / `bvalue` / `omori`
+v1 実装済み: `recent`(P2P / JMA) / `catalog`(USGS) / `bvalue` / `omori` + MCPサーバ(4 tools)
 
 ## Install / run
 
 ```bash
-python3 -m quake_lens --help
-# または pip install 後は
+git clone https://github.com/kenimo49/quake-lens.git
+cd quake-lens
+python3 -m quake_lens --help   # インストール不要でそのまま動く
+
+# pip install する場合
+pip install .            # CLI のみ
+pip install ".[mcp]"     # MCPサーバ込み
 quake-lens --help
 ```
 
@@ -132,6 +147,14 @@ claude mcp add quake-lens -- quake-lens-mcp
 
 設計判断（optional依存、tool分離、統計toolがイベント配列を引数に取らない理由）は
 [docs/mcp.md](docs/mcp.md) を参照。
+
+## ドキュメント
+
+| ドキュメント | 内容 |
+|-------------|------|
+| [docs/glossary.md](docs/glossary.md) | 出力フィールドの読み方（b値・Mc・K/c/p の意味） |
+| [docs/likelihood.md](docs/likelihood.md) | 尤度計算の導出（Aki MLE / Ogata MLE・プロファイル尤度・最適化手順） |
+| [docs/mcp.md](docs/mcp.md) | MCPサーバの設計判断と Claude Code / Claude Desktop への登録手順 |
 
 ## Data sources
 
