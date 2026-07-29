@@ -8,8 +8,12 @@ version = "0.0.1"
 description = "Fetch public earthquake catalogs and compute honest forecasting statistics (b-value, Omori-Utsu decay)"
 readme = "README.md"
 license = { text = "MIT" }
+authors = [{ name = "ken imoto" }]
 requires-python = ">=3.10"
 dependencies = []
+
+[project.urls]
+Repository = "https://github.com/kenimo49/quake-lens"
 
 [project.optional-dependencies]
 mcp = ["mcp"]
