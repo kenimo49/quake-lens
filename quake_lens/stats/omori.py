@@ -7,6 +7,8 @@ N個の観測余震時刻に対して、(c, p) を固定すればKは閉形式�
 
 したがって最適化は (c, p) の2次元となり、以下を最小化する:
     f(c, p) = N*log(integral(c, p)) + p*sum(log(t_i+c))
+
+尤度関数の導出と最適化手順の詳細は docs/likelihood.md を参照。
 """
 
 from __future__ import annotations
