@@ -13,6 +13,12 @@ from quake_lens.sources.http_client import http_get as _http_get
 BASE_URL = "https://api.p2pquake.net/v2/history"
 _JST = timezone(timedelta(hours=9))
 
+# P2P APIは震源未確定の値を null ではなくセンチネル値で表す
+# (API仕様 https://www.p2pquake.net/develop/json_api_v2/ の hypocenter 項)。
+# 深さの -1 も「不明」だが、こちらは除外せず depth_km=-1.0 のまま保持する
+_UNKNOWN_LATLON = -200
+_UNKNOWN_MAGNITUDE = -1
+
 
 def _default_http_get(url: str) -> bytes:
     return _http_get(url, timeout=30.0)
@@ -51,8 +57,22 @@ def _parse_jst_time(s: str) -> datetime:
 
 
 def parse(payload: list[dict[str, Any]], min_scale: int | None = None) -> list[dict[str, Any]]:
-    """P2P APIレスポンスを正規化イベントに変換する。震源情報を欠く項目は読み飛ばす。"""
+    """P2P APIレスポンスを正規化イベントに変換する。
+
+    震源情報を欠く項目 (震度速報 `ScalePrompt` 等) は読み飛ばす。P2P APIは
+    震源が未確定の電文で lat/lon を `-200`、magnitude を `-1` というセンチネル値
+    で返してくるため、None チェックだけでなくこれらの値も skip する。深さの
+    `-1` は「深さ不明」を意味する正当な値なので除外しない。
+
+    同一地震につき複数の電文 (`ScalePrompt` → `Destination` → `DetailScale`) が
+    順に届き、それぞれが1項目として現れるため、`earthquake.time` をキーに最初の
+    1件のみ採用する。history APIは新しい報が先頭に並ぶため、keep-firstは詳報を
+    採る意味になる (jma.py の eid dedupe と同じ設計)。処理順は「センチネル除外→
+    dedupe」とし、震度速報が先に落ちることで dedupe が震源情報つきの電文だけで
+    行われるようにする。
+    """
     events: list[dict[str, Any]] = []
+    seen_times: set[str] = set()
     for item in payload:
         if item.get("code") != 551:
             continue
@@ -73,6 +93,11 @@ def parse(payload: list[dict[str, Any]], min_scale: int | None = None) -> list[d
         mag = hypo.get("magnitude")
         if lat is None or lon is None or mag is None:
             continue
+        if lat == _UNKNOWN_LATLON or lon == _UNKNOWN_LATLON or mag == _UNKNOWN_MAGNITUDE:
+            continue
+        if time_str in seen_times:
+            continue
+        seen_times.add(time_str)
         events.append(
             make_event(
                 time=to_iso8601_utc(when),

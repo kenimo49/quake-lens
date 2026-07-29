@@ -1,7 +1,8 @@
 [
   {
+    "_role": "正常系1: 能登本震の詳報 (DetailScale相当)。同一timeの3電文中で最新=先頭。dedupeで採用される側",
     "code": 551,
-    "id": "aaaa1111",
+    "id": "aaaa1111-detail",
     "earthquake": {
       "time": "2024-01-01 16:10:00.000",
       "hypocenter": {
@@ -15,6 +16,39 @@
     }
   },
   {
+    "_role": "dedupe対象: 同一timeの震源・津波電文 (Destination相当)。keep-firstで捨てられる側",
+    "code": 551,
+    "id": "aaaa1111-dest",
+    "earthquake": {
+      "time": "2024-01-01 16:10:00.000",
+      "hypocenter": {
+        "name": "石川県能登地方",
+        "latitude": 37.5,
+        "longitude": 137.3,
+        "depth": 10,
+        "magnitude": 7.6
+      },
+      "maxScale": 70
+    }
+  },
+  {
+    "_role": "skip対象: 震度速報 (ScalePrompt相当、同一timeの最古電文=実APIでは末尾)。lat/lon=-200, mag=-1 のセンチネル値",
+    "code": 551,
+    "id": "aaaa1110-prompt",
+    "earthquake": {
+      "time": "2024-01-01 16:10:00.000",
+      "hypocenter": {
+        "name": "",
+        "latitude": -200,
+        "longitude": -200,
+        "depth": -1,
+        "magnitude": -1
+      },
+      "maxScale": 70
+    }
+  },
+  {
+    "_role": "正常系2: 能登の余震 (M5.8)。min_scaleフィルタで落ちる側 (maxScale=40)",
     "code": 551,
     "id": "aaaa1112",
     "earthquake": {
@@ -30,6 +64,7 @@
     }
   },
   {
+    "_role": "正常系3: 宮城県沖 (M4.2)。depth=60の非能登イベント",
     "code": 551,
     "id": "aaaa1113",
     "earthquake": {
@@ -45,6 +80,7 @@
     }
   },
   {
+    "_role": "skip対象: code!=551 (津波予報等の別電文種)",
     "code": 552,
     "id": "not-a-quake",
     "areas": []
