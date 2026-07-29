@@ -7,7 +7,7 @@ import urllib.parse
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable
 
-from quake_lens.schema import make_event, to_iso8601_utc
+from quake_lens.schema import SOURCE_P2P, make_event, to_iso8601_utc
 from quake_lens.sources.http_client import http_get as _http_get
 
 BASE_URL = "https://api.p2pquake.net/v2/history"
@@ -81,7 +81,7 @@ def parse(payload: list[dict[str, Any]], min_scale: int | None = None) -> list[d
                 depth_km=depth if depth is not None else -1.0,
                 mag=mag,
                 place=hypo.get("name") or "",
-                source="p2p",
+                source=SOURCE_P2P,
             )
         )
     return events

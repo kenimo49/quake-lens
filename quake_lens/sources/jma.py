@@ -6,7 +6,7 @@ import json
 import re
 from typing import Any, Callable
 
-from quake_lens.schema import make_event, parse_iso8601_utc, to_iso8601_utc
+from quake_lens.schema import SOURCE_JMA, make_event, parse_iso8601_utc, to_iso8601_utc
 from quake_lens.sources.http_client import http_get as _http_get
 
 BASE_URL = "https://www.jma.go.jp/bosai/quake/data/list.json"
@@ -53,52 +53,60 @@ def _parse_cod(cod: str) -> tuple[float, float, float] | None:
     return lat, lon, depth_km
 
 
+def _to_event(item: dict[str, Any]) -> dict[str, Any] | None:
+    """list.jsonの1要素を正規化イベントに変換する。
+
+    `cod`/`mag`/`at` のいずれかが欠落・空文字・parse不能な要素 (震度速報等、
+    震源情報を持たない電文) は None を返す。
+    """
+    cod = item.get("cod")
+    mag_str = item.get("mag")
+    at = item.get("at")
+    if not cod or not mag_str or not at:
+        return None
+    parsed = _parse_cod(cod)
+    if parsed is None:
+        return None
+    lat, lon, depth_km = parsed
+    try:
+        mag = float(mag_str)
+    except (TypeError, ValueError):
+        return None
+    try:
+        when = parse_iso8601_utc(at)
+    except ValueError:
+        return None
+    return make_event(
+        time=to_iso8601_utc(when),
+        lat=lat,
+        lon=lon,
+        depth_km=depth_km,
+        mag=mag,
+        place=item.get("anm") or "",
+        source=SOURCE_JMA,
+    )
+
+
 def parse(payload: list[dict[str, Any]], limit: int | None = None) -> list[dict[str, Any]]:
     """JMAリストレスポンスを正規化イベントに変換する。
 
-    `cod` または `mag` を欠く要素 (震度速報等) はskipする。同一 `eid`
-    (同一地震の続報) は最初の1件のみ採用する。list.jsonは新しい報が
-    先頭に並ぶ (rdt降順) ため、これは精査済みの最新報を採用する意味になる。
-    `limit` が指定されれば先頭からその件数までに切り詰める。
+    1要素の変換は `_to_event` に委譲し、ここでは全体の制御だけを行う:
+    同一 `eid` (同一地震の続報) は最初の1件のみ採用する。list.jsonは
+    新しい報が先頭に並ぶ (rdt降順) ため、これは精査済みの最新報を採用する
+    意味になる。`limit` が指定されれば先頭からその件数までに切り詰める。
     """
     events: list[dict[str, Any]] = []
     seen_eids: set[str] = set()
     for item in payload:
-        cod = item.get("cod")
-        mag_str = item.get("mag")
-        if not cod or not mag_str:
-            continue
         eid = item.get("eid")
+        if eid and eid in seen_eids:
+            continue
+        event = _to_event(item)
+        if event is None:
+            continue
         if eid:
-            if eid in seen_eids:
-                continue
             seen_eids.add(eid)
-        parsed = _parse_cod(cod)
-        if parsed is None:
-            continue
-        lat, lon, depth_km = parsed
-        try:
-            mag = float(mag_str)
-        except (TypeError, ValueError):
-            continue
-        at = item.get("at")
-        if not at:
-            continue
-        try:
-            when = parse_iso8601_utc(at)
-        except ValueError:
-            continue
-        events.append(
-            make_event(
-                time=to_iso8601_utc(when),
-                lat=lat,
-                lon=lon,
-                depth_km=depth_km,
-                mag=mag,
-                place=item.get("anm") or "",
-                source="jma",
-            )
-        )
+        events.append(event)
         if limit is not None and len(events) >= limit:
             break
     return events

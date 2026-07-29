@@ -9,7 +9,7 @@ from typing import Any
 
 from quake_lens import __version__
 from quake_lens.format import format_bvalue, format_events, format_omori
-from quake_lens.schema import parse_iso8601_utc
+from quake_lens.schema import SOURCE_JMA, SOURCE_P2P, parse_iso8601_utc
 from quake_lens.sources import jma, p2p, usgs
 from quake_lens.stats import bvalue as bvalue_stats
 from quake_lens.stats import omori as omori_stats
@@ -42,8 +42,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_recent.add_argument(
         "--src",
-        choices=["p2p", "jma"],
-        default="p2p",
+        choices=[SOURCE_P2P, SOURCE_JMA],
+        default=SOURCE_P2P,
         help="取得元 (default: p2p)",
     )
     _add_format_arg(p_recent)
@@ -98,8 +98,8 @@ def _parse_bbox(s: str) -> tuple[float, float, float, float]:
 
 def cmd_recent(args, http_get=None) -> int:
     """`recent` subcommand: P2P地震情報またはJMAから直近イベントを取得して表示する。"""
-    src = getattr(args, "src", "p2p")
-    if src == "jma":
+    src = getattr(args, "src", SOURCE_P2P)
+    if src == SOURCE_JMA:
         if args.min_scale is not None:
             print("error: --min-scale is only supported with --src p2p", file=sys.stderr)
             return 1
