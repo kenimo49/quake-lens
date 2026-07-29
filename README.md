@@ -110,7 +110,7 @@ window  = [0.0000, 10.5432] days
 
 最適化は pure Python の Nelder-Mead（外部ライブラリなし）。
 
-出力フィールド（`b` / `se` / `mc` / `K` / `c` / `p` / `logL` など）の意味は [docs/glossary.md](docs/glossary.md) を参照。
+出力フィールド（`b` / `se` / `mc` / `K` / `c` / `p` / `logL` など）の意味は [docs/glossary.md](docs/glossary.md) を、尤度計算の中身（Aki MLE / Ogata MLE の導出と最適化手順）は [docs/likelihood.md](docs/likelihood.md) を参照。
 
 ## Data sources
 

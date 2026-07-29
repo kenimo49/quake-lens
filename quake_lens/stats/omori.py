@@ -7,12 +7,16 @@ N個の観測余震時刻に対して、(c, p) を固定すればKは閉形式�
 
 したがって最適化は (c, p) の2次元となり、以下を最小化する:
     f(c, p) = N*log(integral(c, p)) + p*sum(log(t_i+c))
+
+尤度関数の導出と最適化手順の詳細は docs/likelihood.md を参照。
 """
 
 from __future__ import annotations
 
 import math
 from typing import Iterable
+
+from quake_lens.stats._optim import _nelder_mead
 
 
 def _integral(c: float, p: float, t_start: float, t_end: float) -> float:
@@ -24,16 +28,30 @@ def _integral(c: float, p: float, t_start: float, t_end: float) -> float:
     return (b ** (1.0 - p) - a ** (1.0 - p)) / (1.0 - p)
 
 
-def loglik(K: float, c: float, p: float, times: list[float], t_start: float, t_end: float) -> float:
-    """修正大森則 (非同次Poisson過程) の完全な対数尤度を返す。"""
-    if K <= 0 or c <= 0 or p <= 0:
-        return float("-inf")
+def _sum_log_shifted(times: list[float], c: float) -> float:
+    """Σ log(t_i + c) を計算する。
+
+    どれか1つでも `t_i + c <= 0` になった時点で `ValueError` を送出する。
+    呼び出し側 (`loglik` / `_neg_profile`) はこれを捕捉して、それぞれの
+    領域外センチネル (`-inf` / `+inf`) に変換する責務を負う。
+    """
     s = 0.0
     for t in times:
         arg = t + c
         if arg <= 0:
-            return float("-inf")
+            raise ValueError("t + c must be > 0")
         s += math.log(arg)
+    return s
+
+
+def loglik(K: float, c: float, p: float, times: list[float], t_start: float, t_end: float) -> float:
+    """修正大森則 (非同次Poisson過程) の完全な対数尤度を返す。"""
+    if K <= 0 or c <= 0 or p <= 0:
+        return float("-inf")
+    try:
+        s = _sum_log_shifted(times, c)
+    except ValueError:
+        return float("-inf")
     integ = _integral(c, p, t_start, t_end)
     return len(times) * math.log(K) - p * s - K * integ
 
@@ -47,66 +65,12 @@ def _neg_profile(c: float, p: float, times: list[float], t_start: float, t_end: 
         return float("inf")
     if integ <= 0:
         return float("inf")
-    s = 0.0
-    for t in times:
-        arg = t + c
-        if arg <= 0:
-            return float("inf")
-        s += math.log(arg)
+    try:
+        s = _sum_log_shifted(times, c)
+    except ValueError:
+        return float("inf")
     n = len(times)
     return n * math.log(integ) + p * s
-
-
-def _nelder_mead(f, x0, step=0.2, xtol=1e-7, ftol=1e-7, max_iter=800):
-    n = len(x0)
-    simplex = [list(x0)]
-    for i in range(n):
-        v = list(x0)
-        v[i] = v[i] + step
-        simplex.append(v)
-    values = [f(*v) for v in simplex]
-    for _ in range(max_iter):
-        order = sorted(range(n + 1), key=lambda i: values[i])
-        simplex = [simplex[i] for i in order]
-        values = [values[i] for i in order]
-        if max(abs(values[i] - values[0]) for i in range(1, n + 1)) < ftol:
-            break
-        spread = 0.0
-        for i in range(1, n + 1):
-            for k in range(n):
-                spread = max(spread, abs(simplex[i][k] - simplex[0][k]))
-        if spread < xtol:
-            break
-        centroid = [sum(simplex[i][k] for i in range(n)) / n for k in range(n)]
-        worst = simplex[-1]
-        xr = [centroid[k] + (centroid[k] - worst[k]) for k in range(n)]
-        fr = f(*xr)
-        if values[0] <= fr < values[-2]:
-            simplex[-1] = xr
-            values[-1] = fr
-            continue
-        if fr < values[0]:
-            xe = [centroid[k] + 2.0 * (centroid[k] - worst[k]) for k in range(n)]
-            fe = f(*xe)
-            if fe < fr:
-                simplex[-1] = xe
-                values[-1] = fe
-            else:
-                simplex[-1] = xr
-                values[-1] = fr
-            continue
-        xc = [centroid[k] + 0.5 * (worst[k] - centroid[k]) for k in range(n)]
-        fc = f(*xc)
-        if fc < values[-1]:
-            simplex[-1] = xc
-            values[-1] = fc
-            continue
-        for i in range(1, n + 1):
-            simplex[i] = [
-                simplex[0][k] + 0.5 * (simplex[i][k] - simplex[0][k]) for k in range(n)
-            ]
-            values[i] = f(*simplex[i])
-    return simplex[0], values[0]
 
 
 def _grid_search(

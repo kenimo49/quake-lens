@@ -12,7 +12,8 @@ Gutenberg-Richter則
 log10 N = a − bM
 ```
 
-に従う（N は M 以上の地震の数）。`bvalue` はこの b を Aki の最尤推定法で求める。
+に従う（N は M 以上の地震の数）。`bvalue` はこの b を Aki の最尤推定法で求める
+（数式の導出は [likelihood.md](likelihood.md) を参照）。
 
 | フィールド | 意味 |
 |-----------|------|
@@ -31,7 +32,8 @@ n(t) = K / (t + c)^p
 ```
 
 で減衰する（t は本震からの経過日数）。`omori` はこの K/c/p を最尤推定
-（Ogata MLE）でフィットする。
+（Ogata MLE）でフィットする（尤度関数と最適化手順は
+[likelihood.md](likelihood.md) を参照）。
 
 | フィールド | 意味 |
 |-----------|------|
