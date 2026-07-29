@@ -17,6 +17,8 @@ def _http_get_from(path: Path):
 
 
 def test_get_recent_p2p_uses_p2p_source():
+    # src引数のルーティング検証: 'p2p' が p2p アダプタに届き、
+    # 正規化イベント (source='p2p') が返ること
     events = mcp_tools.get_recent(
         src="p2p", limit=10, http_get=_http_get_from(FIX / "p2p_recent.json")
     )
@@ -25,6 +27,8 @@ def test_get_recent_p2p_uses_p2p_source():
 
 
 def test_get_recent_p2p_min_scale_filters():
+    # min_scale が p2p アダプタまで伝播してフィルタが効くこと
+    # (fixtureでscale>=50は能登M7.6の1件のみ)
     events = mcp_tools.get_recent(
         src="p2p",
         limit=10,
@@ -36,6 +40,7 @@ def test_get_recent_p2p_min_scale_filters():
 
 
 def test_get_recent_jma_uses_jma_source():
+    # src引数のルーティング検証: 'jma' が jma アダプタに届くこと
     events = mcp_tools.get_recent(
         src="jma", limit=10, http_get=_http_get_from(FIX / "jma_list.json")
     )
@@ -44,6 +49,8 @@ def test_get_recent_jma_uses_jma_source():
 
 
 def test_get_recent_jma_rejects_min_scale():
+    # CLI の `--src jma --min-scale` ガードと同一挙動を tool 層でも
+    # 提供する: min_scale はP2Pのscale値前提なので黙殺せず ValueError
     with pytest.raises(ValueError):
         mcp_tools.get_recent(
             src="jma",
@@ -54,11 +61,13 @@ def test_get_recent_jma_rejects_min_scale():
 
 
 def test_get_recent_unknown_src_raises():
+    # 未知の src はネットワークに触れる前に ValueError で弾く
     with pytest.raises(ValueError):
         mcp_tools.get_recent(src="bogus", http_get=lambda u: b"")
 
 
 def test_get_catalog_uses_usgs_source():
+    # get_catalog は USGS アダプタ固定であること
     events = mcp_tools.get_catalog(
         http_get=_http_get_from(FIX / "usgs_catalog.json")
     )
@@ -67,6 +76,8 @@ def test_get_catalog_uses_usgs_source():
 
 
 def test_get_catalog_invalid_bbox_raises():
+    # bbox は 'minlat,minlon,maxlat,maxlon' の4要素文字列。要素数不正は
+    # ネットワークに触れる前に ValueError で弾く
     with pytest.raises(ValueError):
         mcp_tools.get_catalog(bbox="1,2,3", http_get=lambda u: b"")
 
@@ -95,6 +106,10 @@ def _synth_usgs_catalog_geojson(mags, base_time_ms=1704110400000):
 
 
 def test_estimate_bvalue_fetches_and_estimates():
+    # 中核の設計検証: イベント配列を引数に取らず、tool 内部で取得→推定
+    # まで完結すること (巨大配列をLLMコンテキストに往復させない)。
+    # b=1.0の指数分布から合成したカタログで推定値が回復し、
+    # n (推定使用数) と n_events_fetched (取得総数) が区別されて返ること
     rng = random.Random(42)
     mc = 2.0
     b = 1.0
@@ -120,6 +135,8 @@ def _inverse_cdf(u, c, p, T):
 
 
 def test_fit_omori_fetches_and_fits():
+    # estimate_bvalue と同じ設計検証の omori 版: tool 内部で取得→
+    # 本震以降の経過日数変換→フィットまで完結し、真値p=1.1が回復すること
     rng = random.Random(123)
     c_true, p_true, T = 0.01, 1.1, 10.0
     n = 500
@@ -145,6 +162,9 @@ def test_fit_omori_fetches_and_fits():
 
 
 def test_fit_omori_filters_events_before_mainshock():
+    # 本震より前のイベントは余震ではないので除外される。fixtureの3件は
+    # 全て mainshock (2000年) より前 (1970年) → 余震0件となり、
+    # omori.fit の n>=3 検証が ValueError を出すことで除外を確認する
     # 本震より前のイベントは除外される
     payload_dict = _synth_usgs_catalog_geojson([3.0, 3.1, 3.2], base_time_ms=0)
     # base_time_ms=0 (1970-01-01) より後、mainshock=2000-01-01 より前

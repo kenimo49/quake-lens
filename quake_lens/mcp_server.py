@@ -1,19 +1,26 @@
-"""FastMCP による stdio MCP サーバ。
+"""stdio MCP サーバ。
 
 mcp_tools の4関数を tool として登録し、`main()` で stdio 経由に
 起動する。mcp SDK は optional dependency (`quake-lens[mcp]`) として
 提供し、base install の stdlib-only 方針を保つ。
+
+mcp SDK 2.0 で FastMCP は `MCPServer` に改称された (`mcp.server.fastmcp`
+モジュールは削除)。デコレータ・run() のAPIは同型なので、import だけ
+両対応にする。詳細は docs/mcp.md を参照。
 """
 
 from __future__ import annotations
 
 from typing import Any
 
-from mcp.server.fastmcp import FastMCP
+try:  # mcp >= 2.0
+    from mcp.server import MCPServer
+except ImportError:  # mcp 1.x
+    from mcp.server.fastmcp import FastMCP as MCPServer
 
 from quake_lens import mcp_tools
 
-mcp = FastMCP("quake-lens")
+mcp = MCPServer("quake-lens")
 
 
 @mcp.tool()
