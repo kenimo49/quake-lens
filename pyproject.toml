@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "quake-lens"
-version = "0.0.1"
+version = "0.1.0"
 description = "Fetch public earthquake catalogs and compute honest forecasting statistics (b-value, Omori-Utsu decay)"
 readme = "README.md"
 license = { text = "MIT" }
