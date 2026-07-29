@@ -118,6 +118,21 @@ window  = [0.0000, 10.5432] days
 
 出力フィールド（`b` / `se` / `mc` / `K` / `c` / `p` / `logL` など）の意味は [docs/glossary.md](docs/glossary.md) を、尤度計算の中身（Aki MLE / Ogata MLE の導出と最適化手順）は [docs/likelihood.md](docs/likelihood.md) を参照。
 
+## MCP server
+
+LLMクライアント（Claude Code / Claude Desktop 等）向けに、4 tools
+（`get_recent` / `get_catalog` / `estimate_bvalue` / `fit_omori`）を公開する
+MCPサーバを同梱している。mcp SDK は optional dependency で、base install の
+stdlib-only は維持される:
+
+```bash
+pip install "quake-lens[mcp]"
+claude mcp add quake-lens -- quake-lens-mcp
+```
+
+設計判断（optional依存、tool分離、統計toolがイベント配列を引数に取らない理由）は
+[docs/mcp.md](docs/mcp.md) を参照。
+
 ## Data sources
 
 - [P2P地震情報 API](https://www.p2pquake.net/develop/json_api_v2/) — 気象庁情報のリレー、認証不要
