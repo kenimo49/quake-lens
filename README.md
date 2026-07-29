@@ -110,6 +110,8 @@ window  = [0.0000, 10.5432] days
 
 最適化は pure Python の Nelder-Mead（外部ライブラリなし）。
 
+出力フィールド（`b` / `se` / `mc` / `K` / `c` / `p` / `logL` など）の意味は [docs/glossary.md](docs/glossary.md) を参照。
+
 ## Data sources
 
 - [P2P地震情報 API](https://www.p2pquake.net/develop/json_api_v2/) — 気象庁情報のリレー、認証不要

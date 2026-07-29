@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 from typing import Any, Iterable
 
+from .fields import BVALUE_FIELDS, OMORI_FIELDS, FieldSpec, field_value
+
 
 def format_events(events: list[dict[str, Any]], fmt: str) -> str:
     if fmt == "json":
@@ -15,33 +17,11 @@ def format_events(events: list[dict[str, Any]], fmt: str) -> str:
 
 
 def format_bvalue(result: dict[str, Any], fmt: str) -> str:
-    return _render_kv(
-        result,
-        [
-            ("b", result["b"], ".4f"),
-            ("se", result["se"], ".4f"),
-            ("n_used", result["n"], ""),
-            ("mc", result["mc"], ".2f"),
-            ("mean_m", result["mean_m"], ".3f"),
-        ],
-        fmt,
-    )
+    return _render_kv(result, BVALUE_FIELDS, fmt)
 
 
 def format_omori(result: dict[str, Any], fmt: str) -> str:
-    window = f"[{result['t_start']:.4f}, {result['t_end']:.4f}] days"
-    return _render_kv(
-        result,
-        [
-            ("K", result["K"], ".4f"),
-            ("c", result["c"], ".4f"),
-            ("p", result["p"], ".4f"),
-            ("logL", result["logL"], ".4f"),
-            ("n_used", result["n"], ""),
-            ("window", window, ""),
-        ],
-        fmt,
-    )
+    return _render_kv(result, OMORI_FIELDS, fmt)
 
 
 def _to_json(payload: Any) -> str:
@@ -50,13 +30,16 @@ def _to_json(payload: Any) -> str:
 
 def _render_kv(
     payload: dict[str, Any],
-    rows: Iterable[tuple[str, Any, str]],
+    fields: Iterable[FieldSpec],
     fmt: str,
 ) -> str:
     if fmt == "json":
         return _to_json(payload)
     if fmt == "table":
-        return "\n".join(f"{label:<8}= {format(value, spec)}" for label, value, spec in rows)
+        return "\n".join(
+            f"{label:<8}= {format(field_value(payload, source), spec)}"
+            for label, source, spec, _ in fields
+        )
     raise ValueError(f"unknown format: {fmt}")
 
 
