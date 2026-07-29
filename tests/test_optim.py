@@ -66,7 +66,8 @@ def test_minimizes_quadratic_1d():
 
 
 def test_minimizes_rosenbrock():
-    # 谷が曲がった定番のベンチマーク。収縮・全収縮の経路も通る
+    # 谷が曲がった定番のベンチマーク。反射・拡張・収縮の経路を通る
+    # (全収縮は通らないことを実測済み。全収縮は test_shrink_path でカバー)
     x, v = _nelder_mead(
         lambda a, b: (1 - a) ** 2 + 100 * (b - a * a) ** 2,
         [-1.2, 1.0],
@@ -74,6 +75,25 @@ def test_minimizes_rosenbrock():
     )
     assert x[0] == pytest.approx(1.0, abs=1e-3)
     assert x[1] == pytest.approx(1.0, abs=1e-3)
+
+
+def test_shrink_path():
+    # 階段関数は全収縮でしか前進できない: 反射点は fr=0 だが 1D では
+    # values[-2] == values[0] のため採用条件 0 <= fr < 0 が偽、拡張条件
+    # fr < 0 も偽、収縮点は正側で fc = 1 >= 最悪値 1 となり毎反復必ず
+    # 全収縮に落ちる。全収縮が単体を縮めなければ xtol に到達できず
+    # max_iter=800 まで回って評価回数が 2400 を超えるため、上限 100 の
+    # assert が全収縮の動作そのものを検証する
+    evals = []
+
+    def step_fn(x):
+        evals.append(x)
+        return 0.0 if x <= 0 else 1.0
+
+    x, v = _nelder_mead(step_fn, [0.0], step=0.2)
+    assert x == [0.0]
+    assert v == 0.0
+    assert len(evals) < 100
 
 
 def test_respects_max_iter():
@@ -84,8 +104,8 @@ def test_respects_max_iter():
         return (a - 100.0) ** 2 + (b - 100.0) ** 2
 
     _nelder_mead(f, [0.0, 0.0], max_iter=3)
-    # 初期単体 n+1 回 + 各反復あたり高々 2n 回 (全収縮時) しか評価しない
-    assert len(evals) <= 3 + 2 * 2 * 3
+    # 初期単体 n+1 回 + 各反復あたり高々 n+2 回 (反射1+収縮1+全収縮n) しか評価しない
+    assert len(evals) <= 3 + 3 * (2 + 2)
 
 
 def test_returns_best_vertex_even_without_convergence():
