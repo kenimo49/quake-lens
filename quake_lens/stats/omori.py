@@ -92,6 +92,11 @@ def fit(
     t_start: float | None = None,
     t_end: float | None = None,
 ) -> dict[str, float]:
+    """余震時刻の系列 (本震からの経過日数) に修正大森則をMLEでフィットする。
+
+    グリッドサーチで初期値を選び、log空間のNelder-Meadで (c, p) を推定、
+    K は閉形式で復元する。手順の詳細は docs/likelihood.md を参照。
+    """
     ts = sorted(float(t) for t in times)
     if not ts:
         raise ValueError("no aftershock times provided")

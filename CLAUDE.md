@@ -1,5 +1,11 @@
 # quake-lens CLAUDE.md
 
+## 開発コマンド
+
+- lint: `ruff check .`
+- テスト: `python3 -m pytest -q`
+- CLI実行例: `python3 -m quake_lens recent --limit 5`
+
 ## docstring規約
 
 このリポジトリのPythonソース（`quake_lens/` 配下）におけるdocstringは、以下の規約に従うこと。

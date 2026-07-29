@@ -19,6 +19,7 @@ def _default_http_get(url: str) -> bytes:
 
 
 def build_url(limit: int) -> str:
+    """P2P history APIのリクエストURLを組み立てる (codes=551 固定)。"""
     q = urllib.parse.urlencode({"codes": 551, "limit": int(limit)})
     return f"{BASE_URL}?{q}"
 
@@ -28,6 +29,7 @@ def fetch_recent(
     min_scale: int | None = None,
     http_get: Callable[[str], bytes] | None = None,
 ) -> list[dict[str, Any]]:
+    """直近の地震情報を取得して正規化イベントのリストを返す。http_getはテスト用に注入可能。"""
     getter = http_get or _default_http_get
     raw = getter(build_url(limit))
     payload = json.loads(raw)
@@ -49,6 +51,7 @@ def _parse_jst_time(s: str) -> datetime:
 
 
 def parse(payload: list[dict[str, Any]], min_scale: int | None = None) -> list[dict[str, Any]]:
+    """P2P APIレスポンスを正規化イベントに変換する。震源情報を欠く項目は読み飛ばす。"""
     events: list[dict[str, Any]] = []
     for item in payload:
         if item.get("code") != 551:

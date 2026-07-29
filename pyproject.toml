@@ -20,16 +20,10 @@ include = ["quake_lens*"]
 [tool.ruff.lint]
 # select だとデフォルトルール (E4/E7/E9/F) を置き換えて pyflakes まで無効になるため extend-select
 extend-select = ["D"]
+# ignoreは実測で違反が出るルールだけ最小限に残す (2026-07-29 全Dルールを個別に有効化して確認)。
+# D100-D107はこのコードベースでは違反0件のため課さない=そのまま有効。
 ignore = [
-    "D100",
-    "D101",
-    "D102",
-    "D103",
-    "D104",
-    "D105",
-    "D106",
-    "D107",
-    "D400",
+    "D400",  # 1行目末尾のピリオドは強制しない (docstringは日本語で「。」終わりのため。CLAUDE.md参照)
 ]
 
 [tool.ruff.lint.pydocstyle]

@@ -9,6 +9,7 @@ from .fields import BVALUE_FIELDS, OMORI_FIELDS, FieldSpec, field_value
 
 
 def format_events(events: list[dict[str, Any]], fmt: str) -> str:
+    """正規化イベントのリストを table または json 形式の文字列にする。"""
     if fmt == "json":
         return _to_json(events)
     if fmt == "table":
@@ -17,10 +18,12 @@ def format_events(events: list[dict[str, Any]], fmt: str) -> str:
 
 
 def format_bvalue(result: dict[str, Any], fmt: str) -> str:
+    """b値推定結果を BVALUE_FIELDS の仕様に従って整形する。"""
     return _render_kv(result, BVALUE_FIELDS, fmt)
 
 
 def format_omori(result: dict[str, Any], fmt: str) -> str:
+    """大森則フィット結果を OMORI_FIELDS の仕様に従って整形する。"""
     return _render_kv(result, OMORI_FIELDS, fmt)
 
 

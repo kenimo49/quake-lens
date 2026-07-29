@@ -19,6 +19,7 @@ def make_event(
     place: str,
     source: str,
 ) -> dict[str, Any]:
+    """正規化イベントdictを組み立てる。sourceは SOURCES のいずれかであること。"""
     if source not in SOURCES:
         raise ValueError(f"unknown source: {source}")
     return {
@@ -47,6 +48,7 @@ def parse_iso8601_utc(s: str) -> datetime:
 
 
 def to_iso8601_utc(dt: datetime) -> str:
+    """datetimeをUTCの `YYYY-MM-DDTHH:MM:SSZ` 形式の文字列にする。naiveはUTCとみなす。"""
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
     dt = dt.astimezone(timezone.utc)
@@ -54,6 +56,7 @@ def to_iso8601_utc(dt: datetime) -> str:
 
 
 def validate_event(obj: dict[str, Any]) -> dict[str, Any]:
+    """必須フィールドが揃っているか検証し、揃っていればそのまま返す。"""
     missing = [f for f in FIELDS if f not in obj]
     if missing:
         raise ValueError(f"event missing fields: {missing}")
