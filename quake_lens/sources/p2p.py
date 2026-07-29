@@ -13,6 +13,12 @@ from quake_lens.sources.http_client import http_get as _http_get
 BASE_URL = "https://api.p2pquake.net/v2/history"
 _JST = timezone(timedelta(hours=9))
 
+# P2P APIは震源未確定の値を null ではなくセンチネル値で表す
+# (API仕様 https://www.p2pquake.net/develop/json_api_v2/ の hypocenter 項)。
+# 深さの -1 も「不明」だが、こちらは除外せず depth_km=-1.0 のまま保持する
+_UNKNOWN_LATLON = -200
+_UNKNOWN_MAGNITUDE = -1
+
 
 def _default_http_get(url: str) -> bytes:
     return _http_get(url, timeout=30.0)
@@ -87,7 +93,7 @@ def parse(payload: list[dict[str, Any]], min_scale: int | None = None) -> list[d
         mag = hypo.get("magnitude")
         if lat is None or lon is None or mag is None:
             continue
-        if lat == -200 or lon == -200 or mag == -1:
+        if lat == _UNKNOWN_LATLON or lon == _UNKNOWN_LATLON or mag == _UNKNOWN_MAGNITUDE:
             continue
         if time_str in seen_times:
             continue
