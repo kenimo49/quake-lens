@@ -18,10 +18,11 @@ quake-lens --help
 
 ## Subcommands
 
-### `recent` — 直近の地震リスト (P2P地震情報)
+### `recent` — 直近の地震リスト (P2P地震情報 / 気象庁)
 
 ```bash
 python3 -m quake_lens recent --limit 5 --min-scale 30
+python3 -m quake_lens recent --limit 5 --src jma
 ```
 
 出力（table形式）:
@@ -33,6 +34,11 @@ time                      lat       lon   depth   mag  src   place
 ```
 
 `--format json` で正規化イベントJSONを出力。
+
+`--src` で取得元を選べる（default: `p2p`）。`jma` は気象庁の地震リスト
+(list.json) を直接取得する。同一地震の続報は最新の1件に集約される。
+`--min-scale` はP2Pのscale値前提のフィルタなので `--src p2p` 専用
+（`jma` と併用するとエラー）。
 
 ### `catalog` — USGSカタログ取得
 
@@ -115,6 +121,7 @@ window  = [0.0000, 10.5432] days
 ## Data sources
 
 - [P2P地震情報 API](https://www.p2pquake.net/develop/json_api_v2/) — 気象庁情報のリレー、認証不要
+- [気象庁 地震リスト list.json](https://www.jma.go.jp/bosai/quake/data/list.json) — 気象庁の一次ソース、認証不要
 - [USGS Earthquake Catalog API](https://earthquake.usgs.gov/fdsnws/event/1/)
 
 ## Design principles

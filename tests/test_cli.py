@@ -84,6 +84,18 @@ def test_cmd_recent_src_jma(capsys):
     assert events[0]["place"] == "熊本県熊本地方"
 
 
+def test_cmd_recent_src_jma_rejects_min_scale(capsys):
+    # --min-scale はP2Pのscale値前提のフィルタなので、--src jma との併用は
+    # 黙って無視せずエラーにする
+    parser = build_parser()
+    args = parser.parse_args(["recent", "--src", "jma", "--min-scale", "30"])
+    rc = cmd_recent(args, http_get=_jma_http_get)
+    assert rc == 1
+    captured = capsys.readouterr()
+    assert "--min-scale" in captured.err
+    assert captured.out == ""
+
+
 def test_cmd_recent_default_src_is_p2p(capsys):
     parser = build_parser()
     args = parser.parse_args(["recent", "--format", "json"])

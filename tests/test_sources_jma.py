@@ -1,3 +1,4 @@
+import math
 from pathlib import Path
 
 from quake_lens.sources import jma
@@ -11,7 +12,7 @@ def _http_get_fixture(url: str) -> bytes:
 
 def test_fetch_recent_parses_fixture():
     events = jma.fetch_recent(limit=10, http_get=_http_get_fixture)
-    # fixture: 5件のうち、cod/mag欠落2件と同一eid続報1件はskipされ、残り2件
+    # fixture: 5件のうち、cod/mag欠落2件と同一eidの旧報1件はskipされ、残り2件
     assert len(events) == 2
     assert all(e["source"] == "jma" for e in events)
 
@@ -23,11 +24,21 @@ def test_depth_meters_negative_converted_to_km_positive():
     assert e0["lat"] == 32.6
     assert e0["lon"] == 130.7
     assert e0["depth_km"] == 10.0
-    assert e0["mag"] == 4.5
+    assert e0["mag"] == 4.6
     assert e0["place"] == "熊本県熊本地方"
     # 2026-07-29T18:23:00+09:00 -> 09:23 UTC
     assert e0["time"] == "2026-07-29T09:23:00Z"
     assert e0["time"].endswith("Z")
+
+
+def test_parse_cod_shallow_plus_zero_normalized():
+    # ごく浅い地震は実APIで `+0` (正のゼロ) と表記される。素直に符号反転すると
+    # -0.0 になり table 表示が「-0.0」に崩れるため、正のゼロへ正規化する
+    parsed = jma._parse_cod("+32.6+130.7+0/")
+    assert parsed is not None
+    _, _, depth_km = parsed
+    assert depth_km == 0.0
+    assert math.copysign(1.0, depth_km) == 1.0
 
 
 def test_skips_items_missing_cod_or_mag():
@@ -40,10 +51,12 @@ def test_skips_items_missing_cod_or_mag():
 
 def test_dedupe_by_eid_keeps_first():
     events = jma.fetch_recent(limit=10, http_get=_http_get_fixture)
-    # 同一eid "20260729180000" の続報(18:25)は採用されず、18:23の1件だけ
+    # 実APIのlist.jsonはrdt降順 (新しい報が先頭) なので、同一eidの最初の
+    # 1件を採用する = 精査済みの最新報 (ser=2, M4.6) を採用する意味になる。
+    # 旧報 (ser=1, M4.5) は捨てられる
     kumamoto = [e for e in events if e["place"] == "熊本県熊本地方"]
     assert len(kumamoto) == 1
-    assert kumamoto[0]["time"] == "2026-07-29T09:23:00Z"
+    assert kumamoto[0]["mag"] == 4.6
 
 
 def test_limit_applies_after_filtering():

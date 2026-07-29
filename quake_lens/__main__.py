@@ -100,6 +100,9 @@ def cmd_recent(args, http_get=None) -> int:
     """`recent` subcommand: P2P地震情報またはJMAから直近イベントを取得して表示する。"""
     src = getattr(args, "src", "p2p")
     if src == "jma":
+        if args.min_scale is not None:
+            print("error: --min-scale is only supported with --src p2p", file=sys.stderr)
+            return 1
         events = jma.fetch_recent(limit=args.limit, http_get=http_get)
     else:
         events = p2p.fetch_recent(limit=args.limit, min_scale=args.min_scale, http_get=http_get)

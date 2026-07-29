@@ -35,7 +35,9 @@ def _parse_cod(cod: str) -> tuple[float, float, float] | None:
     """ISO 6709風の`cod`文字列を(lat, lon, depth_km)に変換する。
 
     第3成分はメートル単位で通常は負値。負のメートル値を正のkm値に変換する
-    (例: `-10000` → 10.0)。tokenが3つ未満なら Noneを返す。
+    (例: `-10000` → 10.0)。ごく浅い地震は `+0` (正のゼロ) と表記されるため、
+    符号反転で生じる `-0.0` は正のゼロに正規化する。tokenが3つ未満なら
+    Noneを返す。
     """
     tokens = _COD_TOKEN.findall(cod)
     if len(tokens) < 3:
@@ -46,7 +48,8 @@ def _parse_cod(cod: str) -> tuple[float, float, float] | None:
         depth_m = float(tokens[2])
     except ValueError:
         return None
-    depth_km = -depth_m / 1000.0
+    # + 0.0 は `-0.0` (ごく浅い `+0` 表記の符号反転) を正のゼロにするため
+    depth_km = -depth_m / 1000.0 + 0.0
     return lat, lon, depth_km
 
 
@@ -54,8 +57,9 @@ def parse(payload: list[dict[str, Any]], limit: int | None = None) -> list[dict[
     """JMAリストレスポンスを正規化イベントに変換する。
 
     `cod` または `mag` を欠く要素 (震度速報等) はskipする。同一 `eid`
-    (同一地震の続報) は最初の1件のみ採用する。`limit` が指定されれば
-    先頭からその件数までに切り詰める。
+    (同一地震の続報) は最初の1件のみ採用する。list.jsonは新しい報が
+    先頭に並ぶ (rdt降順) ため、これは精査済みの最新報を採用する意味になる。
+    `limit` が指定されれば先頭からその件数までに切り詰める。
     """
     events: list[dict[str, Any]] = []
     seen_eids: set[str] = set()
