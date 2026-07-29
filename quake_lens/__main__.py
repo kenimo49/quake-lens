@@ -24,6 +24,7 @@ def _add_input_arg(parser: argparse.ArgumentParser) -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """4つのsubcommand (recent/catalog/bvalue/omori) を持つparserを組み立てる。"""
     parser = argparse.ArgumentParser(
         prog="quake-lens",
         description="公開地震データの取得と統計分析（b値・大森則フィット）",
@@ -90,12 +91,14 @@ def _parse_bbox(s: str) -> tuple[float, float, float, float]:
 
 
 def cmd_recent(args, http_get=None) -> int:
+    """`recent` subcommand: P2P地震情報から直近イベントを取得して表示する。"""
     events = p2p.fetch_recent(limit=args.limit, min_scale=args.min_scale, http_get=http_get)
     print(format_events(events, args.format))
     return 0
 
 
 def cmd_catalog(args, http_get=None) -> int:
+    """`catalog` subcommand: USGSカタログを取得して表示する。"""
     bbox = _parse_bbox(args.bbox) if args.bbox else None
     events = usgs.fetch_catalog(
         start=args.start,
@@ -109,6 +112,7 @@ def cmd_catalog(args, http_get=None) -> int:
 
 
 def cmd_bvalue(args) -> int:
+    """`bvalue` subcommand: 入力イベントJSONからb値を推定して表示する。"""
     if args.mc is None:
         print("error: --mc is required", file=sys.stderr)
         return 1
@@ -120,6 +124,7 @@ def cmd_bvalue(args) -> int:
 
 
 def cmd_omori(args) -> int:
+    """`omori` subcommand: 本震時刻を基準に余震系列へ大森則をフィットして表示する。"""
     if args.mainshock is None:
         print("error: --mainshock is required", file=sys.stderr)
         return 1
@@ -137,6 +142,7 @@ def cmd_omori(args) -> int:
 
 
 def main(argv=None) -> int:
+    """CLIエントリポイント。例外はエラーメッセージに変換して終了コード1を返す。"""
     parser = build_parser()
     args = parser.parse_args(argv)
     func = getattr(args, "func", None)

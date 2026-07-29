@@ -20,16 +20,10 @@ include = ["quake_lens*"]
 [tool.ruff.lint]
 # select だとデフォルトルール (E4/E7/E9/F) を置き換えて pyflakes まで無効になるため extend-select
 extend-select = ["D"]
+# ignoreは実測で違反が出るルールだけ最小限に残す (2026-07-29 全Dルールを個別に有効化して確認)。
+# D100-D107はこのコードベースでは違反0件のため課さない=そのまま有効。
 ignore = [
-    "D100",  # モジュールdocstringは強制しない (小さなユーティリティ/エントリポイントに冗長なため)
-    "D101",  # 公開クラスのdocstringは強制しない (自明な dataclass 等が多いため)
-    "D102",  # 公開メソッドのdocstringは強制しない (自明な override/property に冗長なため)
-    "D103",  # 公開関数のdocstringは強制しない (短いヘルパー関数まで縛らない)
-    "D104",  # パッケージ(__init__.py)のdocstringは強制しない (中身が re-export のみのことが多いため)
-    "D105",  # マジックメソッドのdocstringは強制しない (__repr__ 等は自明)
-    "D106",  # ネストされた公開クラスのdocstringは強制しない (テスト用の内部クラス等)
-    "D107",  # __init__ のdocstringは強制しない (クラス側docstringで説明する方針)
-    "D400",  # 1行目末尾のピリオドは強制しない (日本語docstringは「。」で終わり英語ピリオド不要)
+    "D400",  # 1行目末尾のピリオドは強制しない (docstringは日本語で「。」終わりのため。CLAUDE.md参照)
 ]
 
 [tool.ruff.lint.pydocstyle]

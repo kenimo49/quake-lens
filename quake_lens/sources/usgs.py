@@ -23,6 +23,7 @@ def build_url(
     min_mag: float | None,
     bbox: tuple[float, float, float, float] | None,
 ) -> str:
+    """USGS FDSN event APIのクエリURLを組み立てる。None の条件は省略される。"""
     q: dict[str, str] = {"format": "geojson"}
     if start:
         q["starttime"] = start
@@ -46,6 +47,7 @@ def fetch_catalog(
     bbox: tuple[float, float, float, float] | None = (24.0, 122.0, 46.0, 146.0),
     http_get: Callable[[str], bytes] | None = None,
 ) -> list[dict[str, Any]]:
+    """USGSカタログを取得して正規化イベントのリストを返す。http_getはテスト用に注入可能。"""
     getter = http_get or _default_http_get
     raw = getter(build_url(start, end, min_mag, bbox))
     payload = json.loads(raw)
@@ -53,6 +55,7 @@ def fetch_catalog(
 
 
 def parse(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    """GeoJSONレスポンスを正規化イベントに変換する。座標やmagを欠くfeatureは読み飛ばす。"""
     events: list[dict[str, Any]] = []
     for feat in payload.get("features", []):
         props = feat.get("properties") or {}
