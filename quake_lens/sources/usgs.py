@@ -7,7 +7,7 @@ import urllib.parse
 from datetime import datetime, timezone
 from typing import Any, Callable
 
-from quake_lens.schema import make_event, to_iso8601_utc
+from quake_lens.schema import SOURCE_USGS, make_event, to_iso8601_utc
 from quake_lens.sources.http_client import http_get as _http_get
 
 BASE_URL = "https://earthquake.usgs.gov/fdsnws/event/1/query"
@@ -77,7 +77,7 @@ def parse(payload: dict[str, Any]) -> list[dict[str, Any]]:
                 depth_km=depth,
                 mag=mag,
                 place=props.get("place") or "",
-                source="usgs",
+                source=SOURCE_USGS,
             )
         )
     return events

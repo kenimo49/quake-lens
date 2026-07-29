@@ -20,6 +20,10 @@ def _usgs_http_get(url):
     return (FIXTURE_DIR / "usgs_catalog.json").read_bytes()
 
 
+def _jma_http_get(url):
+    return (FIXTURE_DIR / "jma_list.json").read_bytes()
+
+
 def test_every_subcommand_registers_func():
     # set_defaults(func=...) を忘れたサブコマンドは help 表示 + exit 0 の
     # silent no-op になるため、全サブパーサーの func 登録をここで担保する
@@ -68,6 +72,38 @@ def test_cmd_recent_table_format(capsys):
     out = capsys.readouterr().out
     assert "石川県能登地方" in out
     assert "p2p" in out
+
+
+def test_cmd_recent_src_jma(capsys):
+    parser = build_parser()
+    args = parser.parse_args(["recent", "--src", "jma", "--format", "json"])
+    rc = cmd_recent(args, http_get=_jma_http_get)
+    assert rc == 0
+    events = json.loads(capsys.readouterr().out)
+    assert all(e["source"] == "jma" for e in events)
+    assert events[0]["place"] == "熊本県熊本地方"
+
+
+def test_cmd_recent_src_jma_rejects_min_scale(capsys):
+    # --min-scale はP2Pのscale値前提のフィルタなので、--src jma との併用は
+    # 黙って無視せずエラーにする
+    parser = build_parser()
+    args = parser.parse_args(["recent", "--src", "jma", "--min-scale", "30"])
+    rc = cmd_recent(args, http_get=_jma_http_get)
+    assert rc == 1
+    captured = capsys.readouterr()
+    assert "--min-scale" in captured.err
+    assert captured.out == ""
+
+
+def test_cmd_recent_default_src_is_p2p(capsys):
+    parser = build_parser()
+    args = parser.parse_args(["recent", "--format", "json"])
+    assert args.src == "p2p"
+    rc = cmd_recent(args, http_get=_p2p_http_get)
+    assert rc == 0
+    events = json.loads(capsys.readouterr().out)
+    assert events[0]["source"] == "p2p"
 
 
 def test_cmd_catalog_with_fixture(capsys):

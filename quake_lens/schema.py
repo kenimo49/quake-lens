@@ -6,7 +6,14 @@ from datetime import datetime, timezone
 from typing import Any
 
 FIELDS = ("time", "lat", "lon", "depth_km", "mag", "place", "source")
-SOURCES = ("usgs", "jma", "p2p")
+
+# source識別子の正本。各アダプタ・CLIはこの定数を参照し、直書きしない。
+# enumにしない理由: 値はJSON出力とtable整形にそのまま流れる素のstrであり、
+# Python 3.10のstr mixin enumは str()/format() の挙動がバージョン間で揺れる
+SOURCE_USGS = "usgs"
+SOURCE_JMA = "jma"
+SOURCE_P2P = "p2p"
+SOURCES = (SOURCE_USGS, SOURCE_JMA, SOURCE_P2P)
 
 
 def make_event(
