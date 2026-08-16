@@ -15,6 +15,11 @@ BASE_URL = "https://www.jma.go.jp/bosai/quake/data/list.json"
 # 連結表記から `+32.6` / `+130.7` / `-10000` を順に取り出すのに使う。
 _COD_TOKEN = re.compile(r"[+-]\d+(?:\.\d+)?")
 
+# ISO 6709の度部分の桁数。緯度は `DD`、経度は `DDD` で、これを超える整数部の
+# 桁は分・秒を表す
+_LAT_DEGREE_DIGITS = 2
+_LON_DEGREE_DIGITS = 3
+
 
 def _default_http_get(url: str) -> bytes:
     return _http_get(url, timeout=30.0)
@@ -31,20 +36,64 @@ def fetch_recent(
     return parse(payload, limit=limit)
 
 
+def _parse_angle(token: str, degree_digits: int) -> float | None:
+    """ISO 6709の符号付き角度tokenを十進度に変換する。
+
+    ISO 6709は整数部の桁数で度・度分・度分秒を区別する。緯度は `DD` /
+    `DDMM` / `DDMMSS`、経度は `DDD` / `DDDMM` / `DDDMMSS` で、degree_digits
+    はその度部分の桁数 (緯度なら2、経度なら3)。JMAは通常 `+33.5` のような
+    度表記を返すが、精査済みの震源では `+3237.5` (32度37.5分) のように度分
+    表記が混ざる。これを度としてそのまま読むと震央が地球外に飛ぶ。
+
+    degree_digits はどの形式かを判定する閾値としてのみ使い、度・分・秒の
+    切り出しは整数部の末尾から数える (分は末尾2桁、秒はさらにその後ろ2桁)。
+    ISO 6709は度部分のゼロパディングを要求するのでどちらから数えても同じ
+    結果になるが、末尾基準ならパディングが省かれた入力でも分・秒を取り違えない。
+
+    分・秒が60以上の場合、および整数部が度分秒の桁数を超える場合はNoneを返す。
+    """
+    body = token[1:] if token[0] in "+-" else token
+    sign = -1.0 if token[0] == "-" else 1.0
+    int_digits = len(body.split(".")[0])
+    try:
+        if int_digits <= degree_digits:
+            return sign * float(body)
+        if int_digits <= degree_digits + 2:
+            degrees = float(body[: int_digits - 2])
+            minutes = float(body[int_digits - 2 :])
+            seconds = 0.0
+        elif int_digits <= degree_digits + 4:
+            degrees = float(body[: int_digits - 4])
+            minutes = float(body[int_digits - 4 : int_digits - 2])
+            seconds = float(body[int_digits - 2 :])
+        else:
+            return None
+    except ValueError:
+        return None
+    if minutes >= 60.0 or seconds >= 60.0:
+        return None
+    return sign * (degrees + minutes / 60.0 + seconds / 3600.0)
+
+
 def _parse_cod(cod: str) -> tuple[float, float, float] | None:
     """ISO 6709風の`cod`文字列を(lat, lon, depth_km)に変換する。
 
+    緯度・経度は度表記と度分表記が混在するため `_parse_angle` に委譲する。
     第3成分はメートル単位で通常は負値。負のメートル値を正のkm値に変換する
     (例: `-10000` → 10.0)。ごく浅い地震は `+0` (正のゼロ) と表記されるため、
-    符号反転で生じる `-0.0` は正のゼロに正規化する。tokenが3つ未満なら
-    Noneを返す。
+    符号反転で生じる `-0.0` は正のゼロに正規化する。tokenが3つ未満のとき、
+    角度がparse不能なとき、変換後の値が地球上の範囲を外れるときはNoneを返す。
     """
     tokens = _COD_TOKEN.findall(cod)
     if len(tokens) < 3:
         return None
+    lat = _parse_angle(tokens[0], _LAT_DEGREE_DIGITS)
+    lon = _parse_angle(tokens[1], _LON_DEGREE_DIGITS)
+    if lat is None or lon is None:
+        return None
+    if abs(lat) > 90.0 or abs(lon) > 180.0:
+        return None
     try:
-        lat = float(tokens[0])
-        lon = float(tokens[1])
         depth_m = float(tokens[2])
     except ValueError:
         return None

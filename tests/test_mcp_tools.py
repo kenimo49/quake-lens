@@ -44,7 +44,7 @@ def test_get_recent_jma_uses_jma_source():
     events = mcp_tools.get_recent(
         src="jma", limit=10, http_get=_http_get_from(FIX / "jma_list.json")
     )
-    assert len(events) == 2
+    assert len(events) == 3
     assert all(e["source"] == "jma" for e in events)
 
 
