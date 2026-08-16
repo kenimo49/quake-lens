@@ -62,7 +62,17 @@ def test_parse_angle_handles_each_iso6709_form():
     assert jma._parse_angle("+323730", 2) == pytest.approx(32.625)
     assert jma._parse_angle("+130.7", 3) == pytest.approx(130.7)
     assert jma._parse_angle("+13040.7", 3) == pytest.approx(130.6783333, abs=1e-6)
+    assert jma._parse_angle("+1304040.8", 3) == pytest.approx(130.678, abs=1e-6)
+
+
+def test_parse_angle_handles_negative_tokens():
+    # JMAは国外の地震も返すため南緯・西経が来る (例: 中米 lon=-76.3)。
+    # 符号は度分秒に展開する前に切り離す
+    assert jma._parse_angle("-32.6", 2) == pytest.approx(-32.6)
     assert jma._parse_angle("-3237.5", 2) == pytest.approx(-32.625)
+    assert jma._parse_angle("-76.3", 3) == pytest.approx(-76.3)
+    assert jma._parse_angle("-13040.7", 3) == pytest.approx(-130.6783333, abs=1e-6)
+    assert jma._parse_angle("-1304040.8", 3) == pytest.approx(-130.678, abs=1e-6)
 
 
 def test_parse_angle_rejects_malformed_values():
@@ -76,6 +86,36 @@ def test_parse_cod_rejects_out_of_range_coordinates():
     # 桁数判定を抜けても地球上に無い座標は通さない
     assert jma._parse_cod("+9137.5+13040.7-10000/") is None
     assert jma._parse_cod("+3237.5+19040.7-10000/") is None
+
+
+def test_parse_drops_events_with_unparsable_coordinates():
+    # 座標が解決できない要素は、壊れた値のままイベント化せずskipする
+    # (cod/mag欠落と同じ扱い)。統計側に地球外の震央が流れないようにするため
+    payload = [
+        {
+            "eid": "1",
+            "at": "2026-07-28T16:27:00+09:00",
+            "anm": "範囲外",
+            "mag": "7.1",
+            "cod": "+9137.5+13040.7-16000/",
+        },
+        {
+            "eid": "2",
+            "at": "2026-07-28T16:28:00+09:00",
+            "anm": "分が60以上",
+            "mag": "5.0",
+            "cod": "+3270.0+13040.7-16000/",
+        },
+        {
+            "eid": "3",
+            "at": "2026-07-28T16:29:00+09:00",
+            "anm": "正常",
+            "mag": "4.0",
+            "cod": "+3237.5+13040.7-16000/",
+        },
+    ]
+    events = jma.parse(payload)
+    assert [e["place"] for e in events] == ["正常"]
 
 
 def test_skips_items_missing_cod_or_mag():
